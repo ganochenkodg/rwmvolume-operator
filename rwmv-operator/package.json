@@ -1,0 +1,26 @@
+{
+  "name": "rwmv-operator",
+  "version": "0.1.0",
+  "description": "ReadWriteMany Volumes operator",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ganochenkodg/rwmvolume-operator.git"
+  },
+  "keywords": [
+    "k8s",
+    "operator"
+  ],
+  "author": "Dmitrii Ganochenko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ganochenkodg/rwmvolume-operator/issues"
+  },
+  "homepage": "https://github.com/ganochenkodg/rwmvolume-operator#readme",
+  "dependencies": {
+    "@kubernetes/client-node": "^0.18.1"
+  }
+}

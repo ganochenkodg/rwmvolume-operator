@@ -17,7 +17,8 @@ spec:
       serviceAccountName: rwmvolume-operator-sa
       containers:
       - name: operator
-        image: node:18-alpine3.16
+        image: docker.io/dganochenko/rwvm-operator:latest
+        imagePullPolicy: Always
         command:
           - /bin/sh
           - "-c"
