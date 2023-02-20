@@ -28,14 +28,8 @@ spec:
                storageClassName:
                  description: "StorageClass for RWO Volume"
                  type: string
-               reclaimPolicy:
-                 description: "ReclaimPolicy for RWO Volume, Delete by default"
-                 type: string
-                 enum:
-                 - Delete
-                 - Retain
                capacity:
-                 description: "Volume capacity"
+                 description: "Volume capacity, GBs"
                  type: integer
                  minimum: 1
              required: ["storageClassName", "capacity"]

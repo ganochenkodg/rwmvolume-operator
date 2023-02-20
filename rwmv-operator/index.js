@@ -1,4 +1,5 @@
 import * as k8s from '@kubernetes/client-node';
+import { pvcTemplate } from './templates.js';
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
@@ -9,6 +10,19 @@ const watch = new k8s.Watch(kc);
 // Create, Update or Destroy?
 async function onEvent(phase, apiObj) {
   log(`Received event in phase ${phase}.`);
+  if (phase == 'ADDED') {
+    console.log(pvcTemplate((apiObj));
+  } else if (phase == 'MODIFIED') {
+    try {
+      console.log(pvcTemplate((apiObj));
+    } catch (err) {
+      log(err);
+    }
+  } else if (phase == 'DELETED') {
+    console.log(pvcTemplate((apiObj));
+  } else {
+    log(`Unknown event type: ${phase}`);
+  }
   console.log(apiObj);
 }
 // Helpers to continue watching after an event
@@ -26,6 +40,9 @@ async function watchResource() {
     onDone
   );
 }
+
+let applyingScheduled = false;
+
 // The watch has begun
 async function main() {
   await watchResource();
