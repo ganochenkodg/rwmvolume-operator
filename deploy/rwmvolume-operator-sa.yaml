@@ -1,5 +1,0 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: rwmvolume-operator-sa
-  namespace: rwmvolume-operator
