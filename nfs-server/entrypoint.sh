@@ -22,14 +22,8 @@ chmod 777 /export
 while true; do
   pid=`pidof rpc.mountd`
   while [ -z "$pid" ]; do
-    echo "Displaying /etc/exports contents:"
-    cat /etc/exports
-    echo ""
-
     echo "Starting rpcbind..."
     /sbin/rpcbind -w
-    echo "Displaying rpcbind status..."
-    /sbin/rpcinfo
 
     echo "Starting NFS in the background..."
     /usr/sbin/rpc.nfsd --debug 8 --no-udp --no-nfs-version 3
