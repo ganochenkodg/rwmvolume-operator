@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rwmvolume-operator
+  namespace: rwmvolume-operator
+  labels: &labels
+    app: rwmvolume-operator
+    component: operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels: *labels
+  template:
+    metadata: 
+      labels: *labels
+    spec:
+      serviceAccountName: rwmvolume-operator-sa
+      containers:
+      - name: operator
+        image: node:18-alpine3.16
+        command:
+          - /bin/sh
+          - "-c"
+          - "sleep 180m"
