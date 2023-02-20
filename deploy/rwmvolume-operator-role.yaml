@@ -1,0 +1,36 @@
+# permissions for end users to edit mycustomresources.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rwmvolume-operator-role
+rules:
+  - apiGroups:
+      - dganochenko.work
+    resources:
+      - rwmvolumes
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - dganochenko.work
+    resources:
+      - rwmvolumes/status
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ''
+    verbs:
+      - '*'
+    resources:
+      - '*'
