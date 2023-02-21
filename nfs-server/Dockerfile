@@ -11,6 +11,6 @@ COPY entrypoint.sh /usr/bin/entrypoint.sh
 RUN chmod +x /usr/bin/entrypoint.sh
 WORKDIR /export
 
-EXPOSE 2049
+EXPOSE 2049 20048
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]

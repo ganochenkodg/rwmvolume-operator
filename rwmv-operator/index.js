@@ -1,5 +1,5 @@
-import * as k8s from '@kubernetes/client-node';
-import { pvcTemplate } from './templates.js';
+import * as k8s from "@kubernetes/client-node";
+import { deleteResource, applyPvc, applyDeployment } from "./operations.js";
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
@@ -15,16 +15,16 @@ const watch = new k8s.Watch(kc);
 // Create, Update or Destroy?
 async function onEvent(phase, apiObj) {
   log(`Received event in phase ${phase}.`);
-  if (phase == 'ADDED') {
+  if (phase == "ADDED") {
     scheduleApplying(apiObj);
-  } else if (phase == 'MODIFIED') {
+  } else if (phase == "MODIFIED") {
     try {
       scheduleApplying(apiObj);
     } catch (err) {
       log(err);
     }
-  } else if (phase == 'DELETED') {
-    await deleteResource(apiObj);
+  } else if (phase == "DELETED") {
+    await deleteResource(apiObj, k8sCoreApi, k8sAppsApi);
   } else {
     log(`Unknown event type: ${phase}`);
   }
@@ -37,20 +37,12 @@ function onDone(err) {
 }
 
 async function watchResource() {
-  log('Watching API');
+  log("Watching API");
   return watch.watch(
-    '/apis/dganochenko.work/v1alpha1/rwmvolumes',
+    "/apis/dganochenko.work/v1alpha1/rwmvolumes",
     {},
     onEvent,
     onDone
-  );
-}
-
-async function deleteResource(obj) {
-  log(`Deleted ${obj.metadata.name}`);
-  k8sApi.deleteNamespacedPersistentVolumeClaim(
-    `${obj.metadata.name}-volume-pvc`,
-    `${obj.metadata.namespace}`
   );
 }
 
@@ -65,42 +57,8 @@ function scheduleApplying(obj) {
 
 async function applyNow(obj) {
   applyingScheduled = false;
-  applyPVC(obj);
-}
-
-async function applyPVC(obj) {
-  const objName = obj.metadata.name + '-volume-pvc';
-  const objNamespace = obj.metadata.namespace;
-  // read PVC and try to update it
-  try {
-    const response = await k8sCoreApi.readNamespacedPersistentVolumeClaim(
-      `${objName}`,
-      `${objNamespace}`
-    );
-    const newPvc = response.body;
-    newPvc.spec.resources.requests.storage = obj.spec.capacity + 'Gi';
-    k8sCoreApi.replaceNamespacedPersistentVolumeClaim(
-      `${objName}`,
-      `${objNamespace}`,
-      newPvc
-    );
-    log(`PVC ${objName} was updated!`);
-    return;
-  } catch (err) {
-    log(`Can't read ${objName} state...`);
-    log(err);
-  }
-  try {
-    const newpvcTemplate = pvcTemplate(obj);
-    k8sCoreApi.createNamespacedPersistentVolumeClaim(
-      `${objNamespace}`,
-      newpvcTemplate
-    );
-    log(`PVC ${objName} was created!`);
-    return;
-  } catch (err) {
-    log(err);
-  }
+  applyPvc(obj, k8sCoreApi);
+  applyDeployment(obj, k8sAppsApi);
 }
 
 // The watch has begun
@@ -109,13 +67,13 @@ async function main() {
 }
 
 // Helper to pretty print logs
-function log(message) {
+export function log(message) {
   console.log(`${new Date().toLocaleString()}: ${message}`);
 }
 
 // Helper to get better errors if we miss any promise rejection.
-process.on('unhandledRejection', (reason, p) => {
-  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+process.on("unhandledRejection", (reason, p) => {
+  console.log("Unhandled Rejection at: Promise", p, "reason:", reason);
 });
 
 // Run
