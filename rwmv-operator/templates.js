@@ -29,7 +29,8 @@ export function nfsDeploymentTemplate(apiObj) {
       labels: {
         name: `${apiObj.metadata.name}-nfs-server`,
         component: "nfs-server"
-      },
+      }
+    },
     spec: {
       replicas: 1,
       selector: {
@@ -48,32 +49,32 @@ export function nfsDeploymentTemplate(apiObj) {
         spec: {
           containers: [
             {
-            name: `${apiObj.metadata.name}-nfs-server`,
-            image: "docker.io/dganochenko/nfs-server:latest",
-            ports: [
-              {
-              name: "nfs",
-              containerPort: 2049
+              name: `${apiObj.metadata.name}-nfs-server`,
+              image: "docker.io/dganochenko/nfs-server:latest",
+              ports: [
+                {
+                  name: "nfs",
+                  containerPort: 2049
+                },
+                {
+                  name: "mountd",
+                  containerPort: 20048
+                }
+              ],
+              securityContext: {
+                privileged: true
               },
-              {
-              name: "mountd",
-              containerPort: 20048
-              }
-            ],
-            securityContext: {
-              privileged: true
-            },
-            volumeMounts: [
-              {
-              mountPath: "/export",
-              name: `${apiObj.metadata.name}-volume-pvc`
-              }
-            ]
+              volumeMounts: [
+                {
+                  mountPath: "/export",
+                  name: `${apiObj.metadata.name}-volume-pvc`
+                }
+              ]
             }
           ],
           volumes: [
             {
-            name: `${apiObj.metadata.name}-volume-pvc`,
+              name: `${apiObj.metadata.name}-volume-pvc`,
               persistentVolumeClaim: {
                 claimName: `${apiObj.metadata.name}-volume-pvc`
               }
