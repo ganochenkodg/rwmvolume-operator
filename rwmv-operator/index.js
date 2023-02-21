@@ -24,12 +24,12 @@ async function onEvent(phase, apiObj) {
       log(err);
     }
   } else if (phase == 'DELETED') {
-    console.log(pvcTemplate(apiObj));
+    await deleteResource(apiObj);
   } else {
     log(`Unknown event type: ${phase}`);
   }
-  console.log(apiObj);
 }
+
 // Helpers to continue watching after an event
 function onDone(err) {
   log(`Connection closed. ${err}`);
@@ -43,6 +43,14 @@ async function watchResource() {
     {},
     onEvent,
     onDone
+  );
+}
+
+async function deleteResource(obj) {
+  log(`Deleted ${obj.metadata.name}`);
+  k8sApi.deleteNamespacedPersistentVolumeClaim(
+    `${obj.metadata.name}-volume-pvc`,
+    `${obj.metadata.namespace}`
   );
 }
 
@@ -63,35 +71,36 @@ async function applyNow(obj) {
 async function applyPVC(obj) {
   const objName = obj.metadata.name + '-volume-pvc';
   const objNamespace = obj.metadata.namespace;
+  // read PVC and try to update it
   try {
     const response = await k8sCoreApi.readNamespacedPersistentVolumeClaim(
       `${objName}`,
       `${objNamespace}`
     );
-    const pvc = response.body;
-    pvc.spec.resources.requests.storage = obj.spec.capacity;
+    const newPvc = response.body;
+    newPvc.spec.resources.requests.storage = obj.spec.capacity + 'Gi';
     k8sCoreApi.replaceNamespacedPersistentVolumeClaim(
       `${objName}`,
       `${objNamespace}`,
-      pvc
+      newPvc
     );
-  } catch (err) {
-    log('An unexpected error occurred...');
-    log(err);
+    log(`PVC ${objName} was updated!`);
     return;
+  } catch (err) {
+    log(`Can't read ${objName} state...`);
+    log(err);
   }
-
   try {
     const newpvcTemplate = pvcTemplate(obj);
     k8sCoreApi.createNamespacedPersistentVolumeClaim(
       `${objNamespace}`,
       newpvcTemplate
     );
+    log(`PVC ${objName} was created!`);
+    return;
   } catch (err) {
     log(err);
-    return;
   }
-  log(`PVC ${objName} was configured!`);
 }
 
 // The watch has begun
