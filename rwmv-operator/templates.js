@@ -19,6 +19,29 @@ export function pvcTemplate(apiObj) {
   return template;
 }
 
+export function nfspvTemplate(apiObj) {
+  var template = {
+    apiVersion: "v1",
+    kind: "PersistentVolume",
+    metadata: {
+      name: `${apiObj.metadata.name}-${apiObj.metadata.namespace}-nfs-pv`
+    },
+    spec: {
+      persistentVolumeReclaimPolicy: "Delete",
+      capacity: {
+        storage: `${apiObj.spec.capacity}Gi`
+      },
+      storageClassName: "",
+      accessModes: ["ReadWriteMany"],
+      nfs: {
+        server: `${apiObj.metadata.name}-nfs-server.${apiObj.metadata.namespace}`,
+        path: "/"
+      }
+    }
+  };
+  return template;
+}
+
 export function nfsDeploymentTemplate(apiObj) {
   var template = {
     apiVersion: "apps/v1",
@@ -81,6 +104,36 @@ export function nfsDeploymentTemplate(apiObj) {
             }
           ]
         }
+      }
+    }
+  };
+  return template;
+}
+
+export function nfsServiceTemplate(apiObj) {
+  var template = {
+    apiVersion: "v1",
+    kind: "Service",
+    metadata: {
+      name: `${apiObj.metadata.name}-nfs-service`,
+      namespace: `${apiObj.metadata.namespace}`
+    },
+    spec: {
+      ports: [
+        {
+          name: "nfs",
+          port: 2049,
+          protocol: "TCP"
+        },
+        {
+          name: "mountd",
+          port: 20048,
+          protocol: "TCP"
+        }
+      ],
+      selector: {
+        name: `${apiObj.metadata.name}-nfs-server`,
+        component: "nfs-server"
       }
     }
   };

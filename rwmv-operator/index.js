@@ -1,5 +1,11 @@
 import * as k8s from "@kubernetes/client-node";
-import { deleteResource, applyPvc, applyDeployment } from "./operations.js";
+import {
+  deleteResource,
+  applyPvc,
+  applyDeployment,
+  applyService,
+  applyNfsPv
+} from "./operations.js";
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
@@ -59,6 +65,8 @@ async function applyNow(obj) {
   applyingScheduled = false;
   applyPvc(obj, k8sCoreApi);
   applyDeployment(obj, k8sAppsApi);
+  applyService(obj, k8sCoreApi);
+  applyNfsPv(obj, k8sCoreApi);
 }
 
 // The watch has begun
