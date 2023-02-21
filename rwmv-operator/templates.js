@@ -3,7 +3,7 @@ export function pvcTemplate(apiObj) {
     kind: 'PersistentVolumeClaim',
     apiVersion: 'v1',
     metadata: {
-      name: `${apiObj.metadata.name}`,
+      name: `${apiObj.metadata.name}-volume-pvc`,
       namespace: `${apiObj.metadata.name}`
     },
     spec: {

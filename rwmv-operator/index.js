@@ -4,6 +4,11 @@ import { pvcTemplate } from './templates.js';
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
 
+// Creates the different clients for the different parts of the API.
+const k8sAppsApi = kc.makeApiClient(k8s.AppsV1Api);
+const k8sApiMC = kc.makeApiClient(k8s.CustomObjectsApi);
+const k8sCoreApi = kc.makeApiClient(k8s.CoreV1Api);
+
 const watch = new k8s.Watch(kc);
 
 // Then this function determines what flow needs to happen
@@ -11,15 +16,15 @@ const watch = new k8s.Watch(kc);
 async function onEvent(phase, apiObj) {
   log(`Received event in phase ${phase}.`);
   if (phase == 'ADDED') {
-    console.log(pvcTemplate((apiObj));
+    scheduleApplying(apiObj);
   } else if (phase == 'MODIFIED') {
     try {
-      console.log(pvcTemplate((apiObj));
+      scheduleApplying(apiObj);
     } catch (err) {
       log(err);
     }
   } else if (phase == 'DELETED') {
-    console.log(pvcTemplate((apiObj));
+    console.log(pvcTemplate(apiObj));
   } else {
     log(`Unknown event type: ${phase}`);
   }
@@ -42,6 +47,52 @@ async function watchResource() {
 }
 
 let applyingScheduled = false;
+
+function scheduleApplying(obj) {
+  if (!applyingScheduled) {
+    setTimeout(applyNow, 1000, obj);
+    applyingScheduled = true;
+  }
+}
+
+async function applyNow(obj) {
+  applyingScheduled = false;
+  applyPVC(obj);
+}
+
+async function applyPVC(obj) {
+  const objName = obj.metadata.name + '-volume-pvc';
+  const objNamespace = obj.metadata.namespace;
+  try {
+    const response = await k8sCoreApi.readNamespacedPersistentVolumeClaim(
+      `${objName}`,
+      `${objNamespace}`
+    );
+    const pvc = response.body;
+    pvc.spec.resources.requests.storage = obj.spec.capacity;
+    k8sCoreApi.replaceNamespacedPersistentVolumeClaim(
+      `${objName}`,
+      `${objNamespace}`,
+      pvc
+    );
+  } catch (err) {
+    log('An unexpected error occurred...');
+    log(err);
+    return;
+  }
+
+  try {
+    const newpvcTemplate = pvcTemplate(obj);
+    k8sCoreApi.createNamespacedPersistentVolumeClaim(
+      `${objNamespace}`,
+      newpvcTemplate
+    );
+  } catch (err) {
+    log(err);
+    return;
+  }
+  log(`PVC ${objName} was configured!`);
+}
 
 // The watch has begun
 async function main() {
