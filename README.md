@@ -3,11 +3,11 @@
 # RWMVolume Operator
 
 `RWMVolume Operator` eases the pain of creating ReadWriteMany Volumes in cloud environments. 
-The Operator creates a volume with a chosen storage class and deploys NFS server and ReadWriteMany volume over him. 
+The operator creates a volume with a chosen storage class and deploys NFS server and ReadWriteMany volume over him. 
 Block storages, available as storage classes in popular clouds (for example, 
 [GCP](https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver#create_a_storageclass) or 
 [AWS](https://docs.aws.amazon.com/eks/latest/userguide/storage-classes.html)), allow you to create volumes working in ReadWriteOnce and ReadOnlyMany modes. 
-This Operator makes them "work" in RWX mode if you need a writable volume accessible by many pods.
+This operator makes them "work" in RWX mode if you need a writable volume accessible by many pods.
 
 ## Features
 
