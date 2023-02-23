@@ -8,7 +8,7 @@ spec:
  group: dganochenko.work
  names:
    plural: rwmvolumes
-   singular: rwm-volume
+   singular: rwmvolume
    kind: RWMVolume
    shortNames:
    - rwmv

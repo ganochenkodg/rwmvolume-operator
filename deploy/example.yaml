@@ -2,7 +2,6 @@ apiVersion: dganochenko.work/v1alpha1
 kind: RWMVolume
 metadata:
   name: example-vol
-  namespace: example-vol
 spec:
   storageClassName: standard
   capacity: 2

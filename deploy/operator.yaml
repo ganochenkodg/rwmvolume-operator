@@ -38,4 +38,31 @@ subjects:
   - kind: ServiceAccount
     name: rwmvolume-operator-sa
     namespace: rwmvolume-operator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rwmvolume-operator
+  namespace: rwmvolume-operator
+  labels: &labels
+    app: rwmvolume-operator
+    component: operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels: *labels
+  template:
+    metadata: 
+      labels: *labels
+    spec:
+      serviceAccountName: rwmvolume-operator-sa
+      containers:
+      - name: operator
+        image: docker.io/dganochenko/rwmv-operator:0.1.0
+        imagePullPolicy: Always
+        env:
+        - name: "CLUSTER_DOMAIN"
+          value: "cluster.local"
+        - name: "DEBUG_MODE"
+          value: "false"
 

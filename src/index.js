@@ -4,21 +4,19 @@ import {
   applyPvc,
   applyDeployment,
   applyService,
-  applyNfsPv
+  applyNfsPv,
+  applyNfsPvc
 } from "./operations.js";
+
+const debugMode = process.env.DEBUG_MODE || "false";
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
 
-// Creates the different clients for the different parts of the API.
 const k8sAppsApi = kc.makeApiClient(k8s.AppsV1Api);
-const k8sApiMC = kc.makeApiClient(k8s.CustomObjectsApi);
 const k8sCoreApi = kc.makeApiClient(k8s.CoreV1Api);
-
 const watch = new k8s.Watch(kc);
 
-// Then this function determines what flow needs to happen
-// Create, Update or Destroy?
 async function onEvent(phase, apiObj) {
   log(`Received event in phase ${phase}.`);
   if (phase == "ADDED") {
@@ -36,7 +34,6 @@ async function onEvent(phase, apiObj) {
   }
 }
 
-// Helpers to continue watching after an event
 function onDone(err) {
   log(`Connection closed. ${err}`);
   watchResource();
@@ -67,22 +64,22 @@ async function applyNow(obj) {
   applyDeployment(obj, k8sAppsApi);
   applyService(obj, k8sCoreApi);
   applyNfsPv(obj, k8sCoreApi);
+  applyNfsPvc(obj, k8sCoreApi);
 }
 
-// The watch has begun
 async function main() {
   await watchResource();
 }
 
-// Helper to pretty print logs
 export function log(message) {
   console.log(`${new Date().toLocaleString()}: ${message}`);
 }
 
-// Helper to get better errors if we miss any promise rejection.
-process.on("unhandledRejection", (reason, p) => {
-  console.log("Unhandled Rejection at: Promise", p, "reason:", reason);
-});
+if (debugMode == "true") {
+  log("Debug mode ON!!!");
+  process.on("unhandledRejection", (reason, p) => {
+    console.log("Unhandled Rejection at: Promise", p, "reason:", reason);
+  });
+}
 
-// Run
 main();

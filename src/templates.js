@@ -19,22 +19,54 @@ export function pvcTemplate(apiObj) {
   return template;
 }
 
-export function nfspvTemplate(apiObj) {
+export function nfsPvcTemplate(apiObj) {
+  var template = {
+    apiVersion: "v1",
+    kind: "PersistentVolumeClaim",
+    metadata: {
+      name: `${apiObj.metadata.name}-nfs-pvc`,
+      namespace: `${apiObj.metadata.namespace}`
+    },
+    spec: {
+      storageClassName: "",
+      accessModes: ["ReadWriteMany"],
+      resources: {
+        requests: {
+          storage: `${apiObj.spec.capacity}Gi`
+        }
+      },
+      selector: {
+        matchLabels: {
+          name: `${apiObj.metadata.name}-${apiObj.metadata.namespace}-nfs-pv`,
+          component: "nfs-server"
+        }
+      }
+    }
+  };
+  return template;
+}
+
+export function nfsPvTemplate(apiObj) {
+  const clusterDomain = process.env.CLUSTER_DOMAIN || "cluster.local";
   var template = {
     apiVersion: "v1",
     kind: "PersistentVolume",
     metadata: {
-      name: `${apiObj.metadata.name}-${apiObj.metadata.namespace}-nfs-pv`
+      name: `${apiObj.metadata.name}-${apiObj.metadata.namespace}-nfs-pv`,
+      labels: {
+        name: `${apiObj.metadata.name}-${apiObj.metadata.namespace}-nfs-pv`,
+        component: "nfs-server"
+      }
     },
     spec: {
+      storageClassName: "",
       persistentVolumeReclaimPolicy: "Delete",
       capacity: {
         storage: `${apiObj.spec.capacity}Gi`
       },
-      storageClassName: "",
       accessModes: ["ReadWriteMany"],
       nfs: {
-        server: `${apiObj.metadata.name}-nfs-server.${apiObj.metadata.namespace}`,
+        server: `${apiObj.metadata.name}-nfs-service.${apiObj.metadata.namespace}.svc.${clusterDomain}`,
         path: "/"
       }
     }

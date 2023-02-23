@@ -3,11 +3,16 @@ import {
   pvcTemplate,
   nfsDeploymentTemplate,
   nfsServiceTemplate,
-  nfspvTemplate
+  nfsPvTemplate,
+  nfsPvcTemplate
 } from "./templates.js";
 
 export async function deleteResource(obj, k8sCoreApi, k8sAppsApi) {
   log(`Deleted ${obj.metadata.name}`);
+  k8sCoreApi.deleteNamespacedPersistentVolumeClaim(
+    `${obj.metadata.name}-nfs-pvc`,
+    `${obj.metadata.namespace}`
+  );
   k8sCoreApi.deletePersistentVolume(
     `${obj.metadata.name}-${obj.metadata.namespace}-nfs-pv`
   );
@@ -28,25 +33,31 @@ export async function deleteResource(obj, k8sCoreApi, k8sAppsApi) {
 export async function applyPvc(obj, k8sCoreApi) {
   const objName = obj.metadata.name + "-volume-pvc";
   const objNamespace = obj.metadata.namespace;
-  // read PVC and try to update it
   try {
     const response = await k8sCoreApi.readNamespacedPersistentVolumeClaim(
       `${objName}`,
       `${objNamespace}`
     );
     const newPvc = response.body;
-    newPvc.spec.resources.requests.storage = obj.spec.capacity + "Gi";
-    k8sCoreApi.replaceNamespacedPersistentVolumeClaim(
-      `${objName}`,
-      `${objNamespace}`,
-      newPvc
+    const currentCapacity = newPvc.spec.resources.requests.storage.replace(
+      /[^0-9]/g,
+      ""
     );
-    log(`PVC ${objName} was updated! You may have to expand Storage FS.`);
+    if (currentCapacity < obj.spec.capacity) {
+      newPvc.spec.resources.requests.storage = obj.spec.capacity + "Gi";
+      k8sCoreApi.replaceNamespacedPersistentVolumeClaim(
+        `${objName}`,
+        `${objNamespace}`,
+        newPvc
+      );
+      log(`PVC ${objName} was updated! You may have to expand Storage FS.`);
+    } else {
+      log(`PVC ${objName} capacity can only be increased!`);
+    }
     return;
   } catch (err) {
     log(`Can't read or update ${objName} state...`);
   }
-  // create PVC
   try {
     const newpvcTemplate = pvcTemplate(obj);
     k8sCoreApi.createNamespacedPersistentVolumeClaim(
@@ -59,24 +70,72 @@ export async function applyPvc(obj, k8sCoreApi) {
   }
 }
 
-export async function applyNfsPv(obj, k8sCoreApi) {
-  const objName =
-    obj.metadata.name + "-" + obj.metadata.namespace + "-volume-pvc";
-  // read PV and try to update it
+export async function applyNfsPvc(obj, k8sCoreApi) {
+  const objName = obj.metadata.name + "-nfs-pvc";
+  const objNamespace = obj.metadata.namespace;
   try {
-    const response = await k8sCoreApi.readPersistentVolume(`${objName}`);
-    const newNfspv = response.body;
-    newNfspv.spec.capacity.storage = obj.spec.capacity + "Gi";
-    k8sCoreApi.replacePersistentVolume(`${objName}`, newNfspv);
-    log(`PV ${objName} was updated!`);
+    const response = await k8sCoreApi.readNamespacedPersistentVolumeClaim(
+      `${objName}`,
+      `${objNamespace}`
+    );
+    const newNfsPvc = response.body;
+    const currentCapacity = newNfsPvc.spec.resources.requests.storage.replace(
+      /[^0-9]/g,
+      ""
+    );
+    if (currentCapacity < obj.spec.capacity) {
+      log(
+        `PVC ${objName} can't be increased. Only dynamically provisioned pvc can be resized and the storageclass that provisions the pvc must support resize`
+      );
+      log(
+        "You have to delete the existing PVC when it's not used and re-create it using the next commands:"
+      );
+      console.log(`kubectl delete pvc -n ${objNamespace} ${objName}`);
+      console.log("cat <<EOF | kubectl apply -f -");
+      console.log(JSON.stringify(nfsPvcTemplate(obj), null, 2));
+      console.log("EOF");
+    } else {
+      log(`PVC ${objName} capacity can only be increased!`);
+    }
     return;
   } catch (err) {
     log(`Can't read or update ${objName} state...`);
   }
-  // create PV
   try {
-    const newnfspvTemplate = nfspvTemplate(obj);
-    k8sCoreApi.createPersistentVolume(newpvcTemplate);
+    const newpvcTemplate = nfsPvcTemplate(obj);
+    k8sCoreApi.createNamespacedPersistentVolumeClaim(
+      `${objNamespace}`,
+      newpvcTemplate
+    );
+    log(`PVC ${objName} was created!`);
+  } catch (err) {
+    log(err);
+  }
+}
+
+export async function applyNfsPv(obj, k8sCoreApi) {
+  const objName = obj.metadata.name + "-" + obj.metadata.namespace + "-nfs-pv";
+  try {
+    const response = await k8sCoreApi.readPersistentVolume(`${objName}`);
+    const newNfspv = response.body;
+    const currentCapacity = newNfspv.spec.capacity.storage.replace(
+      /[^0-9]/g,
+      ""
+    );
+    if (currentCapacity < obj.spec.capacity) {
+      newNfspv.spec.capacity.storage = obj.spec.capacity + "Gi";
+      k8sCoreApi.replacePersistentVolume(`${objName}`, newNfspv);
+      log(`PV ${objName} was updated!`);
+    } else {
+      log(`PV ${objName} capacity can only be increased!`);
+    }
+    return;
+  } catch (err) {
+    log(`Can't read or update ${objName} state...`);
+  }
+  try {
+    const newnfspvTemplate = nfsPvTemplate(obj);
+    k8sCoreApi.createPersistentVolume(newnfspvTemplate);
     log(`PV ${objName} was created!`);
   } catch (err) {
     log(err);
@@ -86,7 +145,6 @@ export async function applyNfsPv(obj, k8sCoreApi) {
 export async function applyDeployment(obj, k8sAppsApi) {
   const objName = obj.metadata.name + "-nfs-server";
   const objNamespace = obj.metadata.namespace;
-  // read Deployment
   try {
     const response = await k8sAppsApi.readNamespacedDeployment(
       `${objName}`,
@@ -98,7 +156,6 @@ export async function applyDeployment(obj, k8sAppsApi) {
   } catch (err) {
     log(`Can't read ${objName} state...`);
   }
-  // create Deployment
   try {
     const newdeploymentTemplate = nfsDeploymentTemplate(obj);
     k8sAppsApi.createNamespacedDeployment(
@@ -114,7 +171,6 @@ export async function applyDeployment(obj, k8sAppsApi) {
 export async function applyService(obj, k8sCoreApi) {
   const objName = obj.metadata.name + "-nfs-service";
   const objNamespace = obj.metadata.namespace;
-  // read Service
   try {
     const response = await k8sCoreApi.readNamespacedService(
       `${objName}`,
@@ -126,7 +182,6 @@ export async function applyService(obj, k8sCoreApi) {
   } catch (err) {
     log(`Can't read ${objName} state...`);
   }
-  // create Service
   try {
     const newserviceTemplate = nfsServiceTemplate(obj);
     k8sCoreApi.createNamespacedService(`${objNamespace}`, newserviceTemplate);
