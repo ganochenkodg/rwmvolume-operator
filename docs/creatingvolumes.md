@@ -38,6 +38,8 @@ $ kubectl logs rwmvolume-operator-6786697b4f-lmh76 -n rwmvolume-operator
 2/23/2023, 9:55:35 PM: Watching API
 ```
 
+### Getting started
+
 Deploy your first RWMVolume resource by running the following command:
 
 ```bash
