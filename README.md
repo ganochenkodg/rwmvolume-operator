@@ -16,6 +16,10 @@ RWMVolume Operator provides following features:
 * Create/Delete Volumes and all required environment by creating `RWMVolume` custom resource.
 * Extending the Volume size by changing the `.spec.capacity` field in the `RWMVolume` resource.
 
+## Performance
+
+Will be ready soon.
+
 ## Documentations
 
 * [How it works](docs/howitworks.md) - a general overview and definitions
@@ -43,3 +47,8 @@ kubectl apply -f https://raw.githubusercontent.com/ganochenkodg/rwmvolume-operat
 
 The example is available in `deploy/example`, it creates a volume and a deployment with 3 replicas to work with.
 
+### Disclaimer of Warranty
+
+This project is made for educational and research purposes only. 
+The author does not recommend using it in production and in environments where stability, predictability and speed are important. 
+If you use it, don't forget to make regular backups and save important information before deleting volumes.
