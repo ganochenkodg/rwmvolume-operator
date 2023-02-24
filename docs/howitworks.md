@@ -11,7 +11,7 @@ metadata:
   name: resourcename
 spec:
   # StorageClass of the main Volume
-  # You can use standrd in GKE or gp2 in AKS, for example
+  # You can use standrd in GKE or gp2 in EKS, for example
   storageClassName: standard
   # Volume size in gigabytes
   # Should be a number
