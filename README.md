@@ -16,9 +16,13 @@ RWMVolume Operator provides following features:
 * Create/Delete Volumes and all required environment by creating `RWMVolume` custom resource.
 * Extending the Volume size by changing the `.spec.capacity` field in the `RWMVolume` resource.
 
-## Performance
+## Performance and scope
 
-Will be ready soon.
+With one connected client difference (latency is ~10% higher) in direct using or through the nfs is not so high, you can see results [here](docs/howitworks.md#performance).
+
+However, there are not enough statistics of the usage of this solution in applications that require low latency and high performance disk operations. 
+The most reasonable use case seems to be storing certain mutable information that should be available on all pods in the deployment 
+(for example, some kind of logs, reports, cache and generated content for web applications).
 
 ## Documentations
 
@@ -51,4 +55,6 @@ The example is available in `deploy/example`, it creates a volume and a deployme
 
 This project is made for educational and research purposes only. 
 The author does not recommend using it in production and in environments where stability, predictability and performance are important. 
-If you use it, don't forget to make regular backups and save important information before deleting volumes.
+There are enough proven, scalable, and fault-tolerant storage solutions, such as [Longhorn](https://www.rancher.com/products/longhorn) or [Ceph](https://ceph.io/). 
+If you decided to use this operator, don't forget to make regular backups and save important information before deleting volumes. 
+You are solely responsible for determining the appropriateness of using RWMVolume Operator and assume any risks associated with its use.

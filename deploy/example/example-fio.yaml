@@ -1,0 +1,83 @@
+---
+apiVersion: dganochenko.work/v1alpha1
+kind: RWMVolume
+metadata:
+  name: fio-vol
+spec:
+  storageClassName: standard
+  capacity: 100
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fio2-vol-volume-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: standard
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: benchorig
+spec:
+  template:
+    metadata:
+      labels:
+        kbench: fio
+    spec:
+      containers:
+      - name: kbench
+        image: yasker/kbench:latest
+        imagePullPolicy: Always
+        env:
+        - name: FILE_NAME
+          value: "/volume/test"
+        - name: SIZE
+          value: "10G" # must be 10% smaller than the PVC size due to filesystem also took space
+        - name: CPU_IDLE_PROF
+          value: "disabled" 
+        volumeMounts:
+        - name: vol
+          mountPath: /volume/
+      restartPolicy: Never
+      volumes:
+      - name: vol
+        persistentVolumeClaim:
+          claimName: fio2-vol-volume-pvc
+  backoffLimit: 0
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: benchnfs
+spec:
+  template:
+    metadata:
+      labels:
+        kbench: fio
+    spec:
+      containers:
+      - name: kbench
+        image: yasker/kbench:latest
+        imagePullPolicy: Always
+        env:
+        - name: FILE_NAME
+          value: "/volume/test"
+        - name: SIZE
+          value: "10G" # must be 10% smaller than the PVC size due to filesystem also took space
+        - name: CPU_IDLE_PROF
+          value: "disabled" 
+        volumeMounts:
+        - name: vol
+          mountPath: /volume/
+      restartPolicy: Never
+      volumes:
+      - name: vol
+        persistentVolumeClaim:
+          claimName: fio-vol-volume-pvc
+  backoffLimit: 0
+
