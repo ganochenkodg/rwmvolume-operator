@@ -78,6 +78,6 @@ spec:
       volumes:
       - name: vol
         persistentVolumeClaim:
-          claimName: fio-vol-volume-pvc
+          claimName: fio-vol-nfs-pvc
   backoffLimit: 0
 

@@ -35,7 +35,7 @@ graph TD
 
 ## [Performance](#performance)
 
-Let's create a volume with 100 Gb size.
+Let's create 2 volumes with 100 Gb size.
 
 ```bash
 cat <<EOF|kubectl apply -f -
@@ -73,6 +73,7 @@ fio2-vol-volume-pvc   Bound         pvc-e973e492-6acb-4204-aa97-cb267c9dbf4f   1
 ```
 
 Next we will run 2 [kbench](https://github.com/yasker/kbench) jobs and compare the performance of directly connected 100Gb strorage and through the NFS. 
+YAML can be found in `deploy/example`.
 
 Scores of directly connected PVC (IOPS and Bandwidth - higher is better, Latency - lower is better):
 
@@ -109,7 +110,7 @@ Latency in ns (Read/Write)
 And through the nfs:
 
 ```console
-$ kubectl logs -f benchnfs-6w45p
+$ kubectl logs -f benchnfs-whn7d 
 TEST_FILE: /volume/test
 TEST_OUTPUT_PREFIX: test_device
 TEST_SIZE: 10G
@@ -125,15 +126,17 @@ Size: 10G
 Quick Mode: disabled
 =========================
 IOPS (Read/Write)
-        Random:                121 / 250
-    Sequential:          11,947 / 14,953
+        Random:             117 / 27,535
+    Sequential:           4,917 / 27,282
 
 Bandwidth in KiB/sec (Read/Write)
-        Random:          13,988 / 24,846
-    Sequential:        102,943 / 122,822
+        Random:          4,180 / 112,716
+    Sequential:         37,337 / 245,754
                                         
 
 Latency in ns (Read/Write)
-        Random:   21,247,141 / 3,321,962
-    Sequential:        123,412 / 814,006
+        Random:      8,720,976 / 212,208
+    Sequential:        186,513 / 213,477
 ```
+
+NFS Server works in async mode, so Write results look weird, but you can see that Read results 2-3 times worse.

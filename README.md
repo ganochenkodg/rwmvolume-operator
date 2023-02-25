@@ -18,9 +18,9 @@ RWMVolume Operator provides following features:
 
 ## Performance and scope
 
-With one connected client difference (latency is ~10% higher) in direct using or through the nfs is not so high, you can see results [here](docs/howitworks.md#performance).
+With one connected client when using NFS, performance drops by 2-3 times, you can see results [here](docs/howitworks.md#performance).
 
-However, there are not enough statistics of the usage of this solution in applications that require low latency and high performance disk operations. 
+Also there are not enough statistics of the usage of this solution in applications that require low latency and many disk operations. 
 The most reasonable use case seems to be storing certain mutable information that should be available on all pods in the deployment 
 (for example, some kind of logs, reports, cache and generated content for web applications).
 
